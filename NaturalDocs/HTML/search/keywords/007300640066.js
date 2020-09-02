@@ -1,0 +1,1 @@
+NDSearch.OnPrefixDataLoaded("sdf",["Function","Information"],[["SDFileHandler",,[[,,,,0,"File:SDFileHandler.h:SDFileHandler"],[,"SDFileHandler Class",,,1,"File:SDFileHandler.h:SDFileHandler_Class"]]]]);

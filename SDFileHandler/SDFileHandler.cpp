@@ -6,13 +6,13 @@
 // FILE_WRITE opens the file in APPEND mode, not WRITE. That
 // is configured deliberately in the source. This "library"
 // gets around that and FILE_WRITE will open at the start of
-// the file. FILE_APPEND will replicate the existing 
+// the file. FILE_APPEND will replicate the existing
 // FILE_WRITE behaviour.
 //
 // The write() function only ever writes a single byte to
 // the SD Card when used to write, say, an int or a float
 // etc. It works perfectly when passed an array and a size.
-// This library ensures that a write() with a single 
+// This library ensures that a write() with a single
 //  parameter will indeed write the full length of the data.
 //
 //
@@ -23,22 +23,22 @@
 
 #include "SDFileHandler.h"
 
-    // Constructors. Assumes that the SD Card system has been 
-    // initialised and that no files are open.    
-    SDFileHandler::SDFileHandler(const char *fileName, 
+    // Constructors. Assumes that the SD Card system has been
+    // initialised and that no files are open.
+    SDFileHandler::SDFileHandler(const char *fileName,
                                  uint8_t openMode = FILE_READ) {
         size_t nameLength = strlen(fileName);
-        
+
         theFileName = (char *)malloc(nameLength + 1);
         if (theFileName) {
             strncpy(theFileName, fileName, nameLength);
             theFileName[nameLength] = '\0';
         }
-        
+
         theFile = SD.open(fileName, openMode);
     }
-   
-    SDFileHandler::SDFileHandler(String fileName, 
+
+    SDFileHandler::SDFileHandler(String fileName,
                                  uint8_t openMode = FILE_READ) {
         SDFileHandler(fileName.c_str(), openMode);
     }
@@ -58,8 +58,8 @@
     void SDFileHandler::close() {
         theFile.close();
     }
-    
-    
+
+
     // Close an open file, then reopen it in the new mode.
     void SDFileHandler::reOpen(uint8_t openMode) {
         close();
@@ -69,41 +69,44 @@
 
     // Various write functions to correct the borked stuff.
     size_t SDFileHandler::write(byte data) {
-        return theFile.write(data);        
+        return theFile.write(data);
     }
-    
+
     size_t SDFileHandler::write(short data) {
         return theFile.write((uint8_t *)&data, sizeof(short));
     }
-    
+
     size_t SDFileHandler::write(int data) {
         return theFile.write((uint8_t *)&data, sizeof(int));
     }
-    
+
     size_t SDFileHandler::write(long data) {
         return theFile.write((uint8_t *)&data, sizeof(long));
     }
-    
+
     size_t SDFileHandler::write(float data) {
         return theFile.write((uint8_t *)&data, sizeof(float));
     }
-    
+
     size_t SDFileHandler::write(char *data) {
         return theFile.write((uint8_t *)data, strlen(data));
     }
-    
+
     size_t SDFileHandler::write(uint8_t *data, uint32_t dataLength) {
-        return theFile.write(data, dataLength);
+        // Write a C string plus its zero byte terminator.
+        return theFile.write(data, dataLength + 1);
     }
 
     size_t SDFileHandler::writeData(uint8_t *data, uint32_t dataLength) {
+        // Write a C string, or array of bytes, without
+        // a terminator, but with a leading 4 byte size.
         size_t temp;
         temp = theFile.write((uint8_t *)&dataLength, sizeof(long));
         // Should return 4 + length of string.
         return temp + theFile.write(data, dataLength);
     }
-    
-    
+
+
 
     // Bool operator.
     SDFileHandler::operator bool() {
@@ -116,45 +119,45 @@
     byte SDFileHandler::readByte() {
         return theFile.read();
     }
-    
+
     short SDFileHandler::readShort() {
         short data;
         theFile.read((uint8_t *)&data, sizeof(short));
         return data;
     }
-    
+
     int SDFileHandler::readInt() {
         int data;
         theFile.read((uint8_t *)&data, sizeof(int));
         return data;
     }
-    
+
     long SDFileHandler::readLong() {
         long data;
         theFile.read((uint8_t *)&data, sizeof(long));
         return data;
     }
-    
+
     float SDFileHandler::readFloat() {
         float data;
         theFile.read((uint8_t *)&data, sizeof(float));
         return data;
     }
-    
+
     uint32_t SDFileHandler::readData(uint8_t *buffer, uint32_t bufferLength) {
         return theFile.read(buffer, bufferLength);
     }
-    
-    
+
+
 
 
 /*
 //----------------------------------------------------------
 // Open the test file on the card, returns handle on success
-// or NULL on failure. 
-// 
+// or NULL on failure.
+//
 // WARNING: Calling with mode = FILE_WRITE will actually
-//          open at the end. For this reason, I'm setting 
+//          open at the end. For this reason, I'm setting
 //          the position to the start after opening. Reading
 //          the file opens at the start anyway.
 //
@@ -186,8 +189,8 @@ File openFile(const char *fileName, uint8_t mode) {
         Serial.print("File position is now: ");
         Serial.println(theFile.position());
     }
-    
-    return theFile;    
+
+    return theFile;
 }
 
 
@@ -243,7 +246,7 @@ void setup() {
     sizeWritten = myFile.write(Fred);
     Serial.print("Writing byte: Size written = ");
     Serial.println(sizeWritten);
-    
+
     sizeWritten = myFile.write((uint8_t *)&Wilma, sizeof(int));
     Serial.print("Writing int: Size written = ");
     Serial.println(sizeWritten);
@@ -270,7 +273,7 @@ void setup() {
 
     // All done, shutdown.
     closeFile(myFile);
-    
+
 }
 
 

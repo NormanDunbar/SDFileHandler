@@ -1,0 +1,1 @@
+NDSearch.OnPrefixDataLoaded("clo",["Function"],[["close",,[[,,,,0,"File:SDFileHandler.h:close"]]]]);
