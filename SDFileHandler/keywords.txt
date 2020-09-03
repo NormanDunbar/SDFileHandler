@@ -1,0 +1,33 @@
+#######################################
+# Syntax Coloring Map
+#######################################
+
+#######################################
+# Classes (KEYWORD1)
+#######################################
+
+SDFileHandler	KEYWORD1
+
+#######################################
+# Class Methods & Functions (KEYWORD2)
+#######################################
+open	KEYWORD2
+reOpen	KEYWORD2
+close	KEYWORD2
+getHandle	KEYWORD2
+write	KEYWORD2
+writeData	KEYWORD2
+readByte	KEYWORD2
+readShort	KEYWORD2
+readInt	KEYWORD2
+readLong	KEYWORD2
+readFloat	KEYWORD2
+readData	KEYWORD2
+
+######################################
+# Others Constants (LITERAL1)
+#######################################
+FILE_READ	LITERAL1
+FILE_WRITE	LITERAL1
+FILE_APPEND	LITERAL1
+

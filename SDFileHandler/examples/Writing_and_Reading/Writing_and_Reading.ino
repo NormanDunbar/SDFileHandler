@@ -1,20 +1,21 @@
 //----------------------------------------------------------
-// The standard SD File handling code is borked on Arduino!
-// This is an effort to get around that problem - those
-// problems actually!
+// This sketch demonstrates how to write data to a file on
+// an SD card in an efficient manner writing the internal
+// data type representation. Int data, for example, is
+// written as two bytes and not, as "print" would do, in
+// ASCII with one character for each digit.
 //
-// FILE_WRITE opens the file in APPEND mode, not WRITE. That
-// is configured deliberately in the source. This "library"
-// gets around that and FILE_WRITE will open at the start of
-// the file. FILE_APPEND will replicate the existing 
-// FILE_WRITE behaviour.
+// The file is then reopened in read mode, and the data
+// read back into the same variables it was written from.
 //
-// The write() function only ever writes a single byte to
-// the SD Card when used to write, say, an int or a float
-// etc. It works perfectly when passed an array and a size.
-// This library ensures that a write() with a single 
-//  parameter will indeed write the full length of the data.
+// The SD Card reader should be connected as follows:
 //
+// GND -> Arduino GND.
+// VCC -> Arduino 5V. (Unless yours is 3.3V!)
+// MOSI -> Arduino D11
+// MISO -> Arduino D12
+// SCK -> Arduino D13.
+// CS -> Arduino D4. (CARD_SELECT_PIN)
 //
 // Norman Dunbar
 // 31st August 2020.
@@ -45,19 +46,9 @@ bool cardInit(byte cardSelectPin) {
         Serial.println("initialization failed!\n");
         return false;
     }
-    
+
     Serial.println("initialization done.\n");
     return true;
-}
-
-
-//----------------------------------------------------------
-// Close the test file on the card.
-//----------------------------------------------------------
-void closeFile(const File fileHandle) {
-    Serial.print("Closing file...");
-    fileHandle.close();
-    Serial.println("closed");
 }
 
 
@@ -75,7 +66,7 @@ void setup() {
 
     // Open our test file.
     SDFileHandler h(FILE_NAME, FILE_WRITE);
-    
+
 
 
     // Test data.
@@ -94,7 +85,7 @@ void setup() {
     sizeWritten = h.write(Fred);
     Serial.print("Writing byte: Size written = ");
     Serial.println(sizeWritten);
-    
+
     sizeWritten = h.write(Wilma);
     Serial.print("Writing int: Size written = ");
     Serial.println(sizeWritten);
@@ -117,26 +108,21 @@ void setup() {
     Serial.println(sizeWritten);
 
 
-    
+
     // Close, then re-open for reading.
-   
+
     h.reOpen(FILE_READ);
 
     // Read back test data.
-    Serial.println("\nClearing the test data....\n");
-    Fred = Wilma = Barney = Betty = BamBam = 0;
-    memset(Pebbles, 0, strlen(Pebbles));
-
-
     Serial.println("\nReading  test data....\n");
     Fred = h.readByte();
-    Serial.print("Fred = 0x");
+    Serial.print("Fred (byte, in HEX)     = 0x");
     Serial.println(Fred, HEX);
 
     Wilma = h.readInt();
-    Serial.print("Wilma (signed int)   = ");
+    Serial.print("Wilma (signed int)      = ");
     Serial.println(Wilma, DEC);
-    Serial.print("Wilma (unsigned int) = ");
+    Serial.print("Wilma (unsigned int)    = ");
     Serial.println((unsigned int)Wilma, DEC);
 
     Barney = h.readShort();
@@ -146,27 +132,59 @@ void setup() {
     Serial.println((unsigned short)Barney, DEC);
 
     Betty = h.readLong();
-    Serial.print("Betty (signed long)   = ");
+    Serial.print("Betty (signed long)     = ");
     Serial.println(Betty, DEC);
-    Serial.print("Betty (unsigned long) = ");
+    Serial.print("Betty (unsigned long)   = ");
     Serial.println((unsigned long)Betty, DEC);
 
     BamBam = h.readFloat();
     Serial.print("BamBam (signed float)   = ");
     Serial.println(BamBam, DEC);
 
+    // How long is a (piece of) string? We don't
+    // know, so we have to read a long which is the
+    // size of the array we need for the data. The
+    // writeData() function doesn't write a terminator
+    // byte.
+    //
+    // First, get the written data size, in bytes.
     long tempSize = h.readLong();
-    h.readData(Pebbles, tempSize);
-    Serial.print("Pebbles (char *)   = ");
-    Serial.println(Pebbles);
-    Serial.print("Size of Pebbles = ");
-    Serial.println(tempSize, DEC);
+
+    // Now, we need a buffer big enough. If the data
+    // is a C string (not an Arduino String, capital 'S')
+    // we need a terminator.
+    if (tempSize) {
+        // Allocate a buffer, in this case, it's a C string.
+        Pebbles = (char *)malloc(tempSize + 1);
+
+        // If it worked, read the data.
+        if (Pebbles) {
+            h.readData(Pebbles, tempSize);
+
+            // Terminate the string.
+            Pebbles[tempSize] = '\0';
+
+            // Now we can finally show the details.
+            Serial.print("Pebbles (char *)        = ");
+            Serial.println(Pebbles);
+            Serial.print("Size of Pebbles         = ");
+            Serial.println(tempSize, DEC);
+            } else {
+                Serial.print("\nCannot allocate ");
+                Serial.print(tempSize);
+                Serial.println(" bytes of SRAM for data.");
+            }
+        } else {
+            Serial.println("Data size on read was zero.");
+            Serial.println("Nothing to display!");
+        }
+
 
     // All done, shutdown.
     h.close();
 
     Serial.println("Done!");
-    
+
 }
 
 
